@@ -125,16 +125,16 @@
   // Dashboard Mestre — consome endpoints existentes dos Runners quando disponíveis.
   // If you deploy on GitHub Pages, edit the ENDPOINTS block below to point to your Render URLs.
 
-  const ENDPOINTS = {
-    energy: "/bills",
-    energyAlerts: "/alerts",
-    forecasts: "/forecasts",
-    robotics: "/robotics",
-    finance: "/finance",
-    security: "/security",
-    audit: "/audit",
-    health: "/health"
-  };
+ const ENDPOINTS = {
+  energy: "https://energyrunner.onrender.com/bills",
+  energyAlerts: "https://energyrunner.onrender.com/alerts",
+  forecasts: "https://energyrunner.onrender.com/forecasts",
+  robotics: "https://roboticsrunner.onrender.com",
+  finance: "https://financerunner.onrender.com",
+  security: "https://securityrunner.onrender.com",
+  audit: "https://auditrunner.onrender.com",
+  health: "https://healthrunner.onrender.com"
+};
 
   function now(){ return new Date().toLocaleString(); }
 
