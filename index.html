@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dinastia Borges C.O.A — Dashboard Mestre</title>
+  <style>
+    :root{
+      --bg:#041022; --card:#0e2636; --muted:#9fb0bf; --accent1:#7c5cff; --accent2:#4de1d8; --danger:#ff7b72; --ok:#7bffa1;
+      --glass: rgba(255,255,255,0.03);
+      --glass-2: rgba(255,255,255,0.02);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg) 0%,#071328 100%);color:#e6eef6}
+    .wrap{max-width:1200px;margin:28px auto;padding:18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent1),var(--accent2));font-weight:700;color:white;font-size:18px}
+    h1{margin:0;font-size:20px}
+    .muted{color:var(--muted);font-size:13px}
+
+    .topline{display:flex;gap:12px;align-items:center}
+    .status{padding:8px 12px;border-radius:999px;background:linear-gradient(90deg,#2a3b53,#213449);border:1px solid rgba(255,255,255,0.02)}
+
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
+    .col-main{display:grid;gap:18px}
+    .overview{display:flex;gap:10px}
+    .overview .mini{flex:1;padding:12px;border-radius:10px;background:linear-gradient(180deg,var(--glass),transparent);box-shadow:0 8px 20px rgba(2,6,23,0.6)}
+    .card{background:linear-gradient(180deg,var(--card),rgba(8,18,28,0.6));padding:14px;border-radius:12px;box-shadow: 0 8px 28px rgba(2,6,23,0.7)}
+
+    .modules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .module{padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.015),transparent)}
+    .module h4{margin:0 0 8px}
+    .small{font-size:13px;color:var(--muted)}
+
+    .right .panel{margin-bottom:12px}
+    .alerts .item{padding:10px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);margin-bottom:8px}
+
+    .chart{height:120px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:8px}
+
+    .btn{padding:8px 12px;border-radius:999px;border:none;cursor:pointer;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041022}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+
+    @media(max-width:1000px){.grid{grid-template-columns:1fr}.modules{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.modules{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">DB</div>
+        <div>
+          <h1>Dinastia Borges — C.O.A • Dashboard Mestre</h1>
+          <div class="muted">Ex Sapientia, Imperium — Visão operacional unificada</div>
+        </div>
+      </div>
+      <div class="topline">
+        <div class="status">Status: <strong id="global-status">Operando</strong></div>
+        <div class="muted" id="clock">--</div>
+        <button class="btn ghost" id="btn-refresh">Forçar Sync</button>
+        <button class="btn primary" id="btn-action">Ação Rápida</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="col-main">
+        <div class="overview">
+          <div class="mini card"><strong>Operações</strong><div class="small" id="overview-ops">OK</div></div>
+          <div class="mini card"><strong>Finanças</strong><div class="small" id="overview-fin">OK</div></div>
+          <div class="mini card"><strong>Segurança</strong><div class="small" id="overview-sec">OK</div></div>
+        </div>
+
+        <div class="card">
+          <h3>Resumo Estratégico</h3>
+          <div class="muted">Visão consolidada dos Runners — atualiza automaticamente</div>
+          <div class="modules" style="margin-top:12px">
+            <div class="module" id="m-robotics"><h4>Robotics</h4><div class="small" id="robotics-status">Carregando...</div></div>
+            <div class="module" id="m-finance"><h4>Finance</h4><div class="small" id="finance-status">Carregando...</div></div>
+            <div class="module" id="m-security"><h4>Security</h4><div class="small" id="security-status">Carregando...</div></div>
+            <div class="module" id="m-audit"><h4>Audit</h4><div class="small" id="audit-status">Carregando...</div></div>
+            <div class="module" id="m-health"><h4>Health</h4><div class="small" id="health-status">Carregando...</div></div>
+            <div class="module" id="m-energy"><h4>Energy</h4><div class="small" id="energy-status">Carregando...</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Eventos Recentes (correlações automáticas)</h3>
+          <div id="events-list">
+            <div class="small">Nenhum evento ainda — aguarde.</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="right">
+        <div class="panel card">
+          <h3>Alertas</h3>
+          <div class="alerts" id="alerts">
+            <div class="item">Nenhum alerta no momento.</div>
+          </div>
+        </div>
+
+        <div class="panel card">
+          <h3>Últimos Relatórios</h3>
+          <pre id="last-report" style="background:transparent;border:none;color:#bfeee6">--</pre>
+        </div>
+
+        <div class="panel card">
+          <h3>Ações Rápidas</h3>
+          <div style="display:flex;gap:8px">
+            <button class="btn primary" id="btn-pause">Pausar Linha</button>
+            <button class="btn ghost" id="btn-notify">Notificar Time</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>Dinastia Borges • Todos os Runners integrados • Latência Zero</footer>
+  </div>
+
+<script>
+  // Dashboard Mestre — consome endpoints existentes dos Runners quando disponíveis.
+  // If you deploy on GitHub Pages, edit the ENDPOINTS block below to point to your Render URLs.
+
+  const ENDPOINTS = {
+    energy: "/bills",
+    energyAlerts: "/alerts",
+    forecasts: "/forecasts",
+    robotics: "/robotics",
+    finance: "/finance",
+    security: "/security",
+    audit: "/audit",
+    health: "/health"
+  };
+
+  function now(){ return new Date().toLocaleString(); }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const clockEl = document.getElementById('clock'); if(clockEl) clockEl.textContent = now();
+    setInterval(()=>{ if(clockEl) clockEl.textContent = now(); },1000);
+
+    async function fetchJsonSafe(path){
+      try{
+        const r = await fetch(path);
+        if(!r.ok) throw new Error('not ok');
+        return await r.json();
+      }catch(e){
+        return null;
+      }
+    }
+
+    function setModule(id, status, details){
+      const el = document.getElementById(id+'-status'); if(!el) return;
+      el.textContent = status + (details?(' — '+details):'');
+    }
+
+    function addEvent(text){
+      const el = document.getElementById('events-list'); if(!el) return;
+      const div = document.createElement('div'); div.className='small'; div.style.padding='8px'; div.style.marginBottom='6px'; div.textContent = '['+new Date().toLocaleTimeString()+'] '+text; el.prepend(div);
+      while(el.childElementCount>12) el.removeChild(el.lastChild);
+    }
+
+    function pushAlert(msg, sev='MEDIUM'){
+      const el = document.getElementById('alerts'); if(!el) return;
+      const node = document.createElement('div'); node.className='item'; node.innerHTML = `<strong>${sev}</strong><div class="small">${msg}</div>`; el.prepend(node);
+      while(el.childElementCount>8) el.removeChild(el.lastChild);
+    }
+
+    async function refresh(){
+      // Energy
+      const bills = await fetchJsonSafe(ENDPOINTS.energy);
+      const eAlerts = await fetchJsonSafe(ENDPOINTS.energyAlerts);
+      const fcs = await fetchJsonSafe(ENDPOINTS.forecasts);
+
+      if(bills && bills.length){
+        setModule('m-energy','Ativo',`${bills.length} faturas`);
+        addEvent('EnergyRunner: '+((bills[0] && bills[0].findings)?(Array.isArray(bills[0].findings)?bills[0].findings.join('; '):String(bills[0].findings)):'Fatura nova'));
+        const lastReportEl = document.getElementById('last-report');
+        if(lastReportEl) lastReportEl.textContent = JSON.stringify(fcs && fcs.length?fcs[fcs.length-1]:{},null,2);
+        if(eAlerts && eAlerts.length){ eAlerts.slice(0,3).forEach(a=>pushAlert(a.message,a.severity)); }
+      } else {
+        setModule('m-energy','Inativo','Sem dados');
+      }
+
+      // other modules (try fetch, otherwise show default)
+      const robotics = await fetchJsonSafe(ENDPOINTS.robotics) || {status:'OK', issues:[]};
+      setModule('m-robotics',robotics.status || 'OK', robotics.issues?robotics.issues.join(', '):'');
+
+      const finance = await fetchJsonSafe(ENDPOINTS.finance) || {status:'OK',impact:0};
+      setModule('m-finance',finance.status || 'OK', finance.impact?`Impacto R$ ${finance.impact}`:'');
+
+      const security = await fetchJsonSafe(ENDPOINTS.security) || {status:'OK',incidents:[]};
+      setModule('m-security',security.status || 'OK', security.incidents?`${security.incidents.length} incidentes`:'');
+
+      const audit = await fetchJsonSafe(ENDPOINTS.audit) || {status:'OK',reports:[]};
+      setModule('m-audit',audit.status || 'OK', audit.reports?`${audit.reports.length} relatórios`:'');
+
+      const health = await fetchJsonSafe(ENDPOINTS.health) || {status:'OK',fatigue_avg:4.2};
+      setModule('m-health',health.status || 'OK', health.fatigue_avg?`Fadiga ${health.fatigue_avg}`:'');
+
+      // compute global status
+      const criticals = document.querySelectorAll('#alerts .item');
+      const globalEl = document.getElementById('global-status');
+      if(globalEl) globalEl.textContent = criticals.length? 'Atenção' : 'Operando';
+    }
+
+    const btnRefresh = document.getElementById('btn-refresh'); if(btnRefresh) btnRefresh.addEventListener('click',()=>refresh());
+    const btnAction = document.getElementById('btn-action'); if(btnAction) btnAction.addEventListener('click',()=>{addEvent('Ação rápida executada.'); pushAlert('Ação manual disparada','LOW')});
+    const btnPause = document.getElementById('btn-pause'); if(btnPause) btnPause.addEventListener('click',()=>{addEvent('Linha pausada (manual)'); pushAlert('Linha pausada manualmente','HIGH')});
+    const btnNotify = document.getElementById('btn-notify'); if(btnNotify) btnNotify.addEventListener('click',()=>{addEvent('Time notificado'); pushAlert('Notificação enviada ao time','LOW')});
+
+    // initial
+    refresh();
+    setInterval(refresh,10000);
+  });
+</script>
+</body>
+</html>

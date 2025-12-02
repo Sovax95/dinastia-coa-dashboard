@@ -1,0 +1,72 @@
+
+# Dinastia Borges C.O.A - .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Virtual envs
+.env
+.venv
+venv/
+ENV/
+env/
+
+# Build / Distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs
+*.log
+logs/
+*.pid
+
+# Cache
+.cache/
+.mypy_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Credentials / Secrets
+*.key
+*.pem
+*.env.local
+secret.env
+config.local.json
+
+# Node
+node_modules/
+
+# Frontend build
+/public/
+dist/
+out/
+
+# GitHub Pages cache
+_site/
+docs/
+
+# Render / Railway temp
+render.yaml
+railway.json
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+*.bak
