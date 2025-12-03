@@ -170,6 +170,64 @@
     }
 
     async function refresh(){
+  try {
+    const s = await fetchJsonSafe(ENDPOINTS.summary); // fetchJsonSafe mantem o tratamento atual
+    if(!s || !s.summary){
+      console.warn("summary empty", s);
+      return;
+    }
+
+    const summary = s.summary;
+
+    // distribuir para as variáveis/partes de UI que você já usa:
+    const bills = summary.bills || [];
+    const eAlerts = summary.alerts || [];
+    const fcs = summary.forecasts || [];
+    const energy = summary.energy || {};
+    const health = summary.health || {};
+    const finance = summary.finance || {};
+    const security = summary.security || {};
+    const audit = summary.audit || {};
+    const robotics = summary.robotics || {};
+    const events = summary.events || [];
+
+    // exemplo: atualizar o card de bills (ajuste seletores conforme seu DOM)
+    renderBills(bills);        // sua função que desenha a lista de faturas
+    renderAlerts(eAlerts);     // sua função atual
+    renderForecasts(fcs);      // sua função atual
+
+    // exemplo rápido: atualizar um JSON raw no painel (se tiver painel de debug)
+    const rawPanel = document.querySelector("#latest-report-json");
+    if(rawPanel){
+      rawPanel.textContent = JSON.stringify(summary, null, 2);
+    }
+
+    // também atualize contadores/status no topo (exemplo)
+    const opsStatus = document.querySelector("#status-operations");
+    if(opsStatus){ opsStatus.textContent = robotics.status || "OK"; }
+
+    const financeStatus = document.querySelector("#status-finance");
+    if(financeStatus){ financeStatus.textContent = finance.status || "OK"; }
+
+    const energyCard = document.querySelector("#card-energy .body");
+    if(energyCard){
+      if(energy.last_bill){
+        energyCard.textContent = `kWh: ${energy.last_bill.kwh} • bandeira: ${energy.last_bill.flag} • total: R$ ${energy.last_bill.total}`;
+      } else {
+        energyCard.textContent = "Nenhuma fatura registrada.";
+      }
+    }
+
+    // eventos recentes
+    const eventsBox = document.querySelector("#events-list");
+    if(eventsBox){
+      eventsBox.innerHTML = events.map(e => `<div class="evt">[${e.timestamp||''}] ${e.text||JSON.stringify(e)}</div>`).join("");
+    }
+
+  } catch(err){
+    console.error("refresh failed", err);
+  }
+}
       // Energy
       const bills = await fetchJsonSafe(ENDPOINTS.energy);
       const eAlerts = await fetchJsonSafe(ENDPOINTS.energyAlerts);
