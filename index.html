@@ -166,18 +166,44 @@ window.__ENV = { API_BASE: "https://energyrunner.onrender.com" };</script>
 
     window.pushAlert = window.pushAlert || function(msg, sev){ try{ var el=$id('alerts'); if(!el){ safeWarn('pushAlert: alerts not found'); return; } var n=document.createElement('div'); n.className='item'; n.innerHTML='<strong>'+(sev||'MED')+'</strong><div class="small">'+(msg||'')+'</div>'; el.prepend(n); while(el.childElementCount>12) el.removeChild(el.lastChild); }catch(e){ safeWarn('pushAlert failed', e && e.message); } };
 
-    window.refresh = window.refresh || async function(){ try{ var e=(window.API && window.API.endpoints) || {}; var summary = await fetchJsonSafe(e.summary); if(summary && summary.summary){ var s=summary.summary; if(Array.isArray(s.bills)) renderBills(s.bills); if(Array.isArray(s.alerts)) renderAlerts(s.alerts); if(Array.isArray(s.forecasts)) renderForecasts(s.forecasts); safeLog('refresh: used /summary'); setModuleSafe('m-energy',(s.energy && s.energy.status)||'OK',(s.energy && s.energy.last_bill)?((s.energy.last_bill.kwh||'?')+' kWh'):'' ); setModuleSafe('m-robotics',(s.robotics && s.robotics.status)||'OK',''); setModuleSafe('m-finance',(s.finance && s.finance.status)||'OK',''); setModuleSafe('m-security',(s.security && s.security.status)||'OK',''); setModuleSafe('m-audit',(s.audit && s.audit.status)||'OK',''); setModuleSafe('m-health',(s.health && s.health.status)||'OK',''); var globalEl=$id('global-status'); if(globalEl) globalEl.textContent=(document.querySelectorAll('#alerts .item').length ? 'Atenção' : 'Operando'); return; }
+    // --- A MÁGICA ACONTECE AQUI: REFRESH HÍBRIDO ---
+    window.refresh = window.refresh || async function(){ 
+      try{ 
+        var e=(window.API && window.API.endpoints) || {}; 
+        
+        // 1. Tenta pegar o Resumo Geral (Energia e outros mocks)
+        var summary = await fetchJsonSafe(e.summary); 
+        
+        if(summary && summary.summary){ 
+          var s=summary.summary; 
+          if(Array.isArray(s.bills)) renderBills(s.bills); 
+          if(Array.isArray(s.alerts)) renderAlerts(s.alerts); 
+          if(Array.isArray(s.forecasts)) renderForecasts(s.forecasts); 
+          
+          setModuleSafe('m-energy',(s.energy && s.energy.status)||'OK',(s.energy && s.energy.last_bill)?((s.energy.last_bill.kwh||'?')+' kWh'):'' );
+          setModuleSafe('m-robotics',(s.robotics && s.robotics.status)||'OK',''); 
+          setModuleSafe('m-finance',(s.finance && s.finance.status)||'OK',''); 
+          setModuleSafe('m-security',(s.security && s.security.status)||'OK',''); 
+          setModuleSafe('m-audit',(s.audit && s.audit.status)||'OK',''); 
+          
+          var globalEl=$id('global-status'); 
+          if(globalEl) globalEl.textContent=(document.querySelectorAll('#alerts .item').length ? 'Atenção' : 'Operando'); 
+        }
 
-      var bills = await fetchJsonSafe(e.bills); var alerts = await fetchJsonSafe(e.alerts); var forecasts = await fetchJsonSafe(e.forecasts);
-      if(Array.isArray(bills) && bills.length){ renderBills(bills); setModuleSafe('m-energy','Ativo', bills.length + ' faturas'); } else { setModuleSafe('m-energy','Inativo','Sem dados'); }
-      if(Array.isArray(alerts) && alerts.length) renderAlerts(alerts); if(Array.isArray(forecasts)) renderForecasts(forecasts);
-      var roboticsP = await fetchJsonSafe(e.robotics) || {}; setModuleSafe('m-robotics',roboticsP.status || 'OK', (roboticsP.summary && roboticsP.summary.lines)? roboticsP.summary.lines.length + ' lines':'');
-      var financeP = await fetchJsonSafe(e.finance) || {}; setModuleSafe('m-finance',financeP.status || 'OK', financeP.summary && financeP.summary.balance ? ('Saldo R$ ' + financeP.summary.balance) : '');
-      var securityP = await fetchJsonSafe(e.security) || {}; setModuleSafe('m-security',securityP.status || 'OK', securityP.summary && securityP.summary.threats ? (securityP.summary.threats + ' threats') : '');
-      var auditP = await fetchJsonSafe(e.audit) || {}; setModuleSafe('m-audit',auditP.status || 'OK', auditP.summary && auditP.summary.reports ? (auditP.summary.reports.length + ' reports') : '');
-      var healthP = await fetchJsonSafe(e.health) || {}; setModuleSafe('m-health',healthP.status || 'OK', healthP.summary && healthP.summary.fatigue_avg ? ('Fadiga ' + healthP.summary.fatigue_avg) : '');
-      var globalEl2 = $id('global-status'); if(globalEl2) globalEl2.textContent=(document.querySelectorAll('#alerts .item').length ? 'Atenção' : 'Operando');
-    }catch(err){ safeWarn('refresh() error', err && err.message); } };
+        // 2. INJEÇÃO CIRÚRGICA: Busca dados reais do HealthRunner
+        // Ignora o mock do backend principal e vai direto na fonte especializada
+        var healthUrl = "https://healthrunner.onrender.com/summary";
+        var healthP = await fetchJsonSafe(healthUrl) || {};
+        
+        // Atualiza o módulo de Saúde com dados reais de fadiga
+        setModuleSafe('m-health', 
+            healthP.status || 'OK', 
+            healthP.summary && healthP.summary.fatigue_avg ? ('Fadiga ' + healthP.summary.fatigue_avg) : 'Conectando...'
+        );
+
+      }catch(err){ safeWarn('refresh() error', err && err.message); } 
+    };
+    // --------------------------------------------------
 
     function renderBills(bills){ try{ if(!Array.isArray(bills)) return; bills.slice(0,6).forEach(function(b){ window.addEvent && window.addEvent('Fatura: kWh ' + (b.kwh || '?') + ' • R$ ' + (b.total || '?')); }); }catch(e){ safeWarn('renderBills', e && e.message); } }
     function renderAlerts(alerts){ try{ if(!Array.isArray(alerts)) return; alerts.slice(0,6).forEach(function(a){ window.pushAlert && window.pushAlert(a.message || JSON.stringify(a), a.severity || 'LOW'); }); }catch(e){ safeWarn('renderAlerts', e && e.message); } }
