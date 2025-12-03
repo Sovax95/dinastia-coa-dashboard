@@ -166,14 +166,13 @@ window.__ENV = { API_BASE: "https://energyrunner.onrender.com" };</script>
 
     window.pushAlert = window.pushAlert || function(msg, sev){ try{ var el=$id('alerts'); if(!el){ safeWarn('pushAlert: alerts not found'); return; } var n=document.createElement('div'); n.className='item'; n.innerHTML='<strong>'+(sev||'MED')+'</strong><div class="small">'+(msg||'')+'</div>'; el.prepend(n); while(el.childElementCount>12) el.removeChild(el.lastChild); }catch(e){ safeWarn('pushAlert failed', e && e.message); } };
 
-    // --- A MÁGICA ACONTECE AQUI: REFRESH HÍBRIDO ---
+    // --- REFRESH SUPREMO (3 FONTES DE DADOS) ---
     window.refresh = window.refresh || async function(){ 
       try{ 
         var e=(window.API && window.API.endpoints) || {}; 
         
-        // 1. Tenta pegar o Resumo Geral (Energia e outros mocks)
+        // 1. DADOS DE ENERGIA (Backend Principal)
         var summary = await fetchJsonSafe(e.summary); 
-        
         if(summary && summary.summary){ 
           var s=summary.summary; 
           if(Array.isArray(s.bills)) renderBills(s.bills); 
@@ -181,7 +180,6 @@ window.__ENV = { API_BASE: "https://energyrunner.onrender.com" };</script>
           if(Array.isArray(s.forecasts)) renderForecasts(s.forecasts); 
           
           setModuleSafe('m-energy',(s.energy && s.energy.status)||'OK',(s.energy && s.energy.last_bill)?((s.energy.last_bill.kwh||'?')+' kWh'):'' );
-          setModuleSafe('m-robotics',(s.robotics && s.robotics.status)||'OK',''); 
           setModuleSafe('m-finance',(s.finance && s.finance.status)||'OK',''); 
           setModuleSafe('m-security',(s.security && s.security.status)||'OK',''); 
           setModuleSafe('m-audit',(s.audit && s.audit.status)||'OK',''); 
@@ -190,20 +188,24 @@ window.__ENV = { API_BASE: "https://energyrunner.onrender.com" };</script>
           if(globalEl) globalEl.textContent=(document.querySelectorAll('#alerts .item').length ? 'Atenção' : 'Operando'); 
         }
 
-        // 2. INJEÇÃO CIRÚRGICA: Busca dados reais do HealthRunner
-        // Ignora o mock do backend principal e vai direto na fonte especializada
+        // 2. DADOS DE SAÚDE (HealthRunner)
         var healthUrl = "https://healthrunner.onrender.com/summary";
         var healthP = await fetchJsonSafe(healthUrl) || {};
-        
-        // Atualiza o módulo de Saúde com dados reais de fadiga
         setModuleSafe('m-health', 
             healthP.status || 'OK', 
             healthP.summary && healthP.summary.fatigue_avg ? ('Fadiga ' + healthP.summary.fatigue_avg) : 'Conectando...'
         );
 
+        // 3. DADOS DE ROBÓTICA (RoboticsRunner - NOVO)
+        var roboticsUrl = "https://roboticsrunner.onrender.com/summary";
+        var roboP = await fetchJsonSafe(roboticsUrl) || {};
+        setModuleSafe('m-robotics',
+            roboP.status || 'OK',
+            roboP.summary ? (roboP.summary.message || 'Sem dados') : 'Conectando...'
+        );
+
       }catch(err){ safeWarn('refresh() error', err && err.message); } 
     };
-    // --------------------------------------------------
 
     function renderBills(bills){ try{ if(!Array.isArray(bills)) return; bills.slice(0,6).forEach(function(b){ window.addEvent && window.addEvent('Fatura: kWh ' + (b.kwh || '?') + ' • R$ ' + (b.total || '?')); }); }catch(e){ safeWarn('renderBills', e && e.message); } }
     function renderAlerts(alerts){ try{ if(!Array.isArray(alerts)) return; alerts.slice(0,6).forEach(function(a){ window.pushAlert && window.pushAlert(a.message || JSON.stringify(a), a.severity || 'LOW'); }); }catch(e){ safeWarn('renderAlerts', e && e.message); } }
@@ -220,6 +222,5 @@ window.__ENV = { API_BASE: "https://energyrunner.onrender.com" };</script>
     document.addEventListener('DOMContentLoaded', function(){ try{ var clk=$id('clock'); if(clk) clk.textContent=new Date().toLocaleString(); setInterval(function(){ var c=$id('clock'); if(c) c.textContent=new Date().toLocaleString(); },1000); if(typeof window.refresh === 'function') window.refresh(); else setTimeout(function(){ if(window.refresh) window.refresh(); },300); setInterval(function(){ if(window.refresh) window.refresh(); },15000); }catch(e){ safeWarn('init failed', e && e.message); } });
   })();
   </script>
-
 </body>
 </html>
